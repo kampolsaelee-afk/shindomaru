@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SDM QR & Barcode Generator v9</title>
+<title>SDM QR & Barcode Generator v12</title>
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -161,12 +161,28 @@ button{border:0;border-radius:10px;padding:11px 14px;font-weight:800;cursor:poin
   width:auto;min-width:16px;height:16px;padding:0;
 }
 
+
+.sdm-copyright{
+  max-width:1150px;
+  margin:18px auto 28px;
+  padding:14px 18px;
+  border:1px solid var(--line);
+  border-radius:12px;
+  background:var(--panel);
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.65;
+  text-align:center;
+}
+.sdm-copyright strong{color:var(--text)}
+@media print{.sdm-copyright{display:none!important}}
+
 </style>
 </head>
 
 <body>
 <div class="wrap">
-<h1>SDM QR & Barcode Generator v9</h1>
+<h1>SDM QR & Barcode Generator v12</h1>
 <div class="sub">ลากย้ายทุกองค์ประกอบ • ปรับความหนา 1–1000 • QR Code + Barcode • PDF / JPG / PNG</div>
 
 <div class="grid">
@@ -254,13 +270,21 @@ button{border:0;border-radius:10px;padding:11px 14px;font-weight:800;cursor:poin
 
   <div class="row">
     <div>
-      <label>ขนาดข้อความ SKU (px)</label>
+      <label>ขนาดข้อความ SKU / ข้อความรอง (px)</label>
       <input id="skuFontSize" type="number" min="6" max="80" step="1" value="9" placeholder="เช่น 10">
     </div>
+    <div>
+      <label>ความหนา SKU / ข้อความรอง (1–1000)</label>
+      <input id="skuFontWeight" type="number" min="1" max="1000" step="1" value="400" placeholder="เช่น 700">
+    </div>
+  </div>
+
+  <div class="row">
     <div>
       <label>ขนาดข้อความราคา (px)</label>
       <input id="priceFontSize" type="number" min="6" max="80" step="1" value="15" placeholder="เช่น 18">
     </div>
+    <div></div>
   </div>
 
   <div id="barcodeNumericSize">
@@ -296,6 +320,22 @@ button{border:0;border-radius:10px;padding:11px 14px;font-weight:800;cursor:poin
     X: 0.0 mm • Y: 0.0 mm • <span class="center-ok">กึ่งกลางพอดี</span>
   </div>
 
+  <div class="sectionTitle">ความละเอียดไฟล์ QR & Barcode</div>
+  <div class="row">
+    <div>
+      <label>ระดับความคมชัดตอนบันทึก</label>
+      <select id="exportDpi">
+        <option value="300">สูง — 300 DPI</option>
+        <option value="600">ละเอียดมาก — 600 DPI</option>
+        <option value="1200" selected>สูงสุด — 1200 DPI</option>
+      </select>
+    </div>
+    <div>
+      <label>โหมดความคมชัด</label>
+      <input value="High Precision / ไม่เบลอ" readonly>
+    </div>
+  </div>
+
   <div class="buttons">
     <button class="primary" id="generateBtn">สร้าง / อัปเดต</button>
     <button class="png" id="pngBtn">Save PNG</button>
@@ -311,7 +351,7 @@ button{border:0;border-radius:10px;padding:11px 14px;font-weight:800;cursor:poin
     <b>ลากวางด้วยเมาส์:</b> สามารถลาก <b>ชื่อสินค้า, SKU, ราคา, ข้อความ QR/URL และ QR Code/Barcode</b> ไปวางตำแหน่งที่ต้องการได้โดยตรง<br>
     • คลิก Barcode/QR แล้วลากจุดสีน้ำเงินมุมขวาล่างเพื่อย่อ-ขยาย<br>
     • สามารถคีย์ตัวเลขขนาดชื่อสินค้า, ข้อความ QR, Barcode และ QR Code ได้โดยตรง<br>
-    • เส้นกึ่งกลางสีแดงใช้ตรวจตำแหน่ง QR/Barcode และจะแสดงระยะเยื้อง X/Y เป็น mm<br>• สามารถลาก QR/Barcode เพื่อจัดตำแหน่ง และกดปุ่มจัดกึ่งกลางได้ทันที<br>• PNG/JPG Export ประมาณ 300 DPI และ PDF ใช้ขนาดฉลากจริง
+    • เส้นกึ่งกลางสีแดงใช้ตรวจตำแหน่ง QR/Barcode และจะแสดงระยะเยื้อง X/Y เป็น mm<br>• สามารถลาก QR/Barcode เพื่อจัดตำแหน่ง และกดปุ่มจัดกึ่งกลางได้ทันที<br>• PNG/JPG เลือกได้ 300 / 600 / 1200 DPI โดยค่าเริ่มต้นเป็น 1200 DPI เพื่อความคมชัดสูงสุด และ PDF ใช้ขนาดฉลากจริง
   </div>
 </section>
 
@@ -368,6 +408,7 @@ function setTextSizes(){
   const p = Math.max(6, Math.min(80, Number($('priceFontSize').value)||15));
   const nw = Math.max(1, Math.min(1000, Number($('nameFontWeight').value)||900));
   const dw = Math.max(1, Math.min(1000, Number($('dataFontWeight').value)||400));
+  const sw = Math.max(1, Math.min(1000, Number($('skuFontWeight').value)||400));
 
   $('outName').style.fontSize=n+'px';
   $('outData').style.fontSize=d+'px';
@@ -376,6 +417,7 @@ function setTextSizes(){
 
   $('outName').style.fontWeight=String(nw);
   $('outData').style.fontWeight=String(dw);
+  $('outSku').style.fontWeight=String(sw);
   $('outName').style.fontStyle=$('nameItalic').checked?'italic':'normal';
   $('outData').style.fontStyle=$('dataItalic').checked?'italic':'normal';
 }
@@ -716,8 +758,9 @@ async function renderLabel(){
   $('centerDot').style.display='none';
 
   const {w,h}=getLabelSize();
-  const tw=Math.round(w/25.4*300);
-  const th=Math.round(h/25.4*300);
+  const dpi = Math.max(300, Math.min(1200, Number($('exportDpi').value)||1200));
+  const tw = Math.round(w/25.4*dpi);
+  const th = Math.round(h/25.4*dpi);
 
   const c=await html2canvas($('label'),{
     backgroundColor:'#ffffff',
@@ -729,6 +772,7 @@ async function renderLabel(){
   const out=document.createElement('canvas');
   out.width=tw;out.height=th;
   const ctx=out.getContext('2d');
+  ctx.imageSmoothingEnabled=false;
   ctx.fillStyle='#fff';ctx.fillRect(0,0,tw,th);
   ctx.imageSmoothingEnabled=true;
   ctx.imageSmoothingQuality='high';
@@ -795,7 +839,7 @@ $('sizeRange').addEventListener('input',updateStageSize);
   $(id).addEventListener('change',applyNumericCodeSize);
 });
 
-['nameFontSize','dataFontSize','skuFontSize','priceFontSize','nameFontWeight','dataFontWeight','nameItalic','dataItalic'].forEach(id=>{
+['nameFontSize','dataFontSize','skuFontSize','priceFontSize','nameFontWeight','dataFontWeight','skuFontWeight','nameItalic','dataItalic'].forEach(id=>{
   $(id).addEventListener('input',setTextSizes);
   $(id).addEventListener('change',setTextSizes);
 });
@@ -811,6 +855,7 @@ function clampWeightInput(id, fallback){
 }
 $('nameFontWeight').addEventListener('change',()=>clampWeightInput('nameFontWeight',900));
 $('dataFontWeight').addEventListener('change',()=>clampWeightInput('dataFontWeight',400));
+$('skuFontWeight').addEventListener('change',()=>clampWeightInput('skuFontWeight',400));
 
 $('showCenterGuides').addEventListener('change',updateCenterGuides);
 $('centerCodeBtn').addEventListener('click',centerCode);
@@ -825,5 +870,15 @@ applyNumericCodeSize();
 updateCenterGuides();
 updateCodeCenterInfo();
 </script>
+
+<footer class="sdm-copyright">
+  <div><strong>© SDM QR & Barcode Generator</strong> — All Rights Reserved</div>
+  <div>ผู้สร้าง: Mr.KUMPOL SAELEE</div>
+  <div>Email: kampol.saelee@gmail.com</div>
+  <div>ID Line: lizhengwu</div>
+  <div>Wechat id: lzwrick</div>
+  <div>Phone: 0636616896</div>
+</footer>
+
 </body>
 </html>
