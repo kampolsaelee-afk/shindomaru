@@ -1,884 +1,347 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="th">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SDM QR & Barcode Generator v12</title>
-
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
-
+<title>SDM QR & Barcode Generator v13 - Corrected Preview</title>
 <style>
-:root{
-  --bg:#0d1016; --panel:#171b23; --panel2:#202631; --line:#303847;
-  --text:#f5f7fb; --muted:#9ba7b7; --accent:#4ca4ff; --green:#39c77a;
-}
 *{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,"Segoe UI",Tahoma,sans-serif;
-  background:var(--bg); color:var(--text);
-}
-.wrap{max-width:1220px;margin:auto;padding:24px}
-h1{margin:0 0 5px;font-size:28px}
-.sub{color:var(--muted);margin-bottom:20px}
-.grid{display:grid;grid-template-columns:1fr 1.15fr;gap:18px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px}
-label{display:block;font-size:14px;margin:11px 0 6px;color:#e6ebf2}
+body{margin:0;background:#0b1016;color:#f4f7fb;font-family:Arial,"Noto Sans Thai",sans-serif;font-size:12px}
+.app{max-width:1120px;margin:15px auto;padding:0 22px}
+h1{font-size:19px;margin:0 0 4px}
+.sub{font-size:10px;color:#a9bad0;margin-bottom:13px}
+.layout{display:grid;grid-template-columns:333px 1fr;gap:13px}
+.panel{background:#171e27;border:1px solid #344152;border-radius:12px;padding:12px}
+.field{margin-bottom:8px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+label{display:block;font-size:9.5px;font-weight:700;margin-bottom:4px;color:#e7effb}
 input,select,textarea{
-  width:100%;border:1px solid var(--line);background:var(--panel2);color:#fff;
-  border-radius:10px;padding:10px 12px;font-size:15px;outline:none;
+ width:100%;background:#202936;color:#fff;border:1px solid #3a4657;border-radius:7px;
+ padding:7px 8px;font-size:10px;outline:none
 }
-textarea{min-height:65px;resize:vertical}
-input:focus,select:focus,textarea:focus{border-color:var(--accent)}
-.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}
-button{border:0;border-radius:10px;padding:11px 14px;font-weight:800;cursor:pointer}
-.primary{background:var(--accent);color:#071522}
-.png{background:#48c9a2;color:#071b14}
-.jpg{background:#ffbd59;color:#291b00}
-.pdf{background:#ff6f79;color:#25070b}
-.print{background:#313948;color:#fff}
+textarea{height:40px;resize:vertical}
+hr{border:0;border-top:1px solid #354154;margin:10px 0}
+.section-title{font-size:9.5px;font-weight:800;margin-bottom:7px;color:#dfeaff}
+.check{display:flex;align-items:center;gap:6px;margin:5px 0;font-size:9.5px}
+.check input{width:auto}
+.inline{display:flex;gap:6px;align-items:center}
+.inline input[type=range]{padding:0}
+.mini{font-size:8.5px;color:#a7b6ca}
+.coord{padding:8px;background:#111923;border:1px solid #37465a;border-radius:7px;font-size:9px}
+.green{color:#43e07c}
+.actions{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+button{border:0;border-radius:6px;padding:8px 5px;font-size:9px;font-weight:800;cursor:pointer}
+.b1{background:#55c7ff}.b2{background:#4bd67b}.b3{background:#f2bf55}.b4{background:#ef6f78}.b5{background:#d7e0eb}
 
-.preview{
-  min-height:560px;display:flex;align-items:center;justify-content:center;
-  background:#090c11;border:1px dashed #394353;border-radius:14px;padding:24px;overflow:auto;
+.preview-panel{min-height:810px}
+.preview-stage{
+ min-height:350px;background:#0d1319;border:1px dashed #46576d;border-radius:9px;
+ display:flex;align-items:center;justify-content:center;padding:40px
 }
-.label-shell{
-  background:#fff;box-shadow:0 14px 40px rgba(0,0,0,.4);
-  position:relative; flex:none;
+.label-preview{
+ position:relative;background:white;color:black;width:360px;height:240px;
+ box-shadow:0 10px 28px rgba(0,0,0,.35);overflow:hidden
 }
-.label{
-  width:100%;height:100%;background:#fff;color:#000;position:relative;overflow:hidden;
+.center-v,.center-h{position:absolute;pointer-events:none;opacity:.55}
+.center-v{left:50%;top:0;height:100%;border-left:1px dashed #ff4b5a}
+.center-h{top:50%;left:0;width:100%;border-top:1px dashed #ff4b5a}
+.name{position:absolute;top:12px;left:14px;font-size:18px;font-weight:900;white-space:nowrap}
+.fake-barcode{
+ position:absolute;left:50%;top:61px;transform:translateX(-50%);
+ height:68px;width:190px;display:flex;gap:1px;align-items:stretch
 }
-
-/* Draggable elements */
-.draggable{
-  position:absolute; user-select:none; touch-action:none; cursor:move;
-  border:1px dashed transparent; z-index:4;
+.bar{height:100%;background:#000}
+.bc-text{position:absolute;left:50%;top:133px;transform:translateX(-50%);font-size:8px}
+.sku{position:absolute;left:14px;bottom:24px;font-size:14px;font-weight:900}
+.price{position:absolute;right:18px;bottom:19px;font-size:22px;font-weight:900}
+.note{
+ margin-top:12px;padding:10px;border:1px solid #334155;border-radius:8px;
+ background:#111923;color:#c7d3e3;font-size:10px;line-height:1.55
 }
-.draggable.selected{
-  border-color:#4ca4ff;
-  box-shadow:0 0 0 1px rgba(76,164,255,.18);
-}
-.productName{
-  left:8px; top:7px;
-  font-weight:900;text-align:center;white-space:nowrap;
-  max-width:calc(100% - 16px);overflow:hidden;text-overflow:ellipsis;
-  line-height:1.15;padding:2px 4px;
-}
-.dataText{
-  left:8px; bottom:6px;
-  max-width:calc(100% - 16px);
-  text-align:center;line-height:1.15;
-  word-break:break-all;padding:2px 4px;
-}
-.sku{
-  position:absolute;left:8px;top:31px;
-  font-size:9px;color:#444;text-align:center;line-height:1.1;
-  z-index:4;padding:2px 4px;white-space:nowrap;
-}
-.price{
-  position:absolute;left:8px;bottom:24px;
-  font-size:15px;font-weight:900;text-align:center;line-height:1;
-  z-index:4;padding:2px 4px;white-space:nowrap;
-}
-.code-stage{
-  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  display:flex;align-items:center;justify-content:center;
-  border:1px dashed transparent;z-index:3;touch-action:none;
-}
-.code-stage.selected{border-color:#4ca4ff}
-#barcodeSvg{display:block;max-width:none;width:100%;height:100%}
-#qrWrap{display:none;width:100%;height:100%;align-items:center;justify-content:center}
-#qrWrap img,#qrWrap canvas{width:100%!important;height:100%!important;display:block}
-.resize-handle{
-  position:absolute;width:14px;height:14px;background:#4ca4ff;border:2px solid #fff;
-  border-radius:50%;right:-7px;bottom:-7px;cursor:nwse-resize;display:none;z-index:10;
-}
-.code-stage.selected .resize-handle{display:block}
-
-.sectionTitle{
-  margin-top:15px;padding-top:12px;border-top:1px solid var(--line);
-  font-size:13px;font-weight:800;color:#dce5ef;
-}
-.rangeRow{display:grid;grid-template-columns:1fr 70px;gap:10px;align-items:center}
-.rangeRow input[type=range]{padding:0}
-.rangeVal{background:#232b37;border-radius:8px;padding:7px;text-align:center;font-size:12px}
-.status{min-height:19px;margin-top:10px;font-size:13px}
-.badge{display:inline-block;padding:5px 8px;border-radius:8px;background:#232b37;font-size:12px;margin-top:8px}
-.info{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.55}
-.hidden{display:none!important}
-
-@media(max-width:850px){
-  .grid,.row{grid-template-columns:1fr}
-  .preview{min-height:410px}
-}
-@media print{
-  body{background:#fff}
-  .wrap>h1,.sub,.card:first-child,.status,.info,.badge{display:none!important}
-  .wrap{padding:0;margin:0;max-width:none}.grid{display:block}
-  .card,.preview{border:0;padding:0;background:#fff}
-  .label-shell{box-shadow:none}
-  .selected{border-color:transparent!important;box-shadow:none!important}
-  .resize-handle{display:none!important}
-}
-
-.center-guide{
-  position:absolute;pointer-events:none;z-index:20;
-  display:block;
-}
-.center-guide.v{
-  top:0;bottom:0;left:50%;width:0;
-  border-left:1px dashed rgba(255,55,55,.75);
-}
-.center-guide.h{
-  left:0;right:0;top:50%;height:0;
-  border-top:1px dashed rgba(255,55,55,.75);
-}
-.center-dot{
-  position:absolute;left:50%;top:50%;width:8px;height:8px;
-  transform:translate(-50%,-50%);
-  border:1px solid rgba(255,55,55,.9);border-radius:50%;
-  pointer-events:none;z-index:21;background:rgba(255,255,255,.75);
-}
-.center-info{
-  margin-top:10px;padding:10px 12px;border:1px solid var(--line);
-  border-radius:10px;background:#11161f;font-size:13px;line-height:1.5;
-}
-.center-ok{color:#39c77a;font-weight:800}
-.center-off{color:#ffbd59;font-weight:800}
-.checkRow{
-  display:flex;gap:14px;align-items:center;flex-wrap:wrap;
-  padding-top:8px;
-}
-.checkRow label{
-  display:flex;align-items:center;gap:7px;margin:0;
-}
-.checkRow input[type=checkbox]{
-  width:auto;min-width:16px;height:16px;padding:0;
-}
-
-
-.sdm-copyright{
-  max-width:1150px;
-  margin:18px auto 28px;
-  padding:14px 18px;
-  border:1px solid var(--line);
-  border-radius:12px;
-  background:var(--panel);
-  color:var(--muted);
-  font-size:12px;
-  line-height:1.65;
-  text-align:center;
-}
-.sdm-copyright strong{color:var(--text)}
-@media print{.sdm-copyright{display:none!important}}
-
+.badge{display:inline-block;background:#2563eb;padding:2px 7px;border-radius:999px;font-size:9px;margin-left:5px}
+@media(max-width:800px){.layout{grid-template-columns:1fr}.preview-panel{min-height:430px}}
 </style>
 </head>
-
 <body>
-<div class="wrap">
-<h1>SDM QR & Barcode Generator v12</h1>
-<div class="sub">ลากย้ายทุกองค์ประกอบ • ปรับความหนา 1–1000 • QR Code + Barcode • PDF / JPG / PNG</div>
+<div class="app">
+  <h1>SDM QR & Barcode Generator v13 <span class="badge">Corrected Preview</span></h1>
+  <div class="sub">คงเมนูปรับข้อความของ v12 ไว้ + เพิ่มฉลาก 60 × 40 mm + ซ่อนรหัสบาร์โค้ดมุมซ้ายล่าง + เพิ่มข้อความอีก 1 ช่อง</div>
 
-<div class="grid">
-<section class="card">
-
-  <div class="row">
-    <div>
-      <label>ประเภทโค้ด</label>
-      <select id="codeType">
-        <option value="barcode">Barcode</option>
-        <option value="qr">QR Code</option>
-      </select>
-    </div>
-    <div>
-      <label>ขนาดฉลาก</label>
-      <select id="labelSize">
-        <option value="30x60">30 × 60 mm</option>
-        <option value="40x60">40 × 60 mm</option>
-        <option value="50x30">50 × 30 mm</option>
-        <option value="60x30" selected>60 × 30 mm</option>
-      </select>
-    </div>
-  </div>
-
-  <div id="barcodeOptions">
-    <label>รูปแบบ Barcode</label>
-    <select id="format">
-      <option value="CODE128">CODE 128</option>
-      <option value="EAN13">EAN-13</option>
-      <option value="EAN8">EAN-8</option>
-      <option value="UPC">UPC-A</option>
-      <option value="CODE39">CODE 39</option>
-      <option value="ITF14">ITF-14</option>
-    </select>
-  </div>
-
-  <label id="valueLabel">รหัสสินค้า / Barcode</label>
-  <textarea id="value">HF-000001</textarea>
-
-  <label>ชื่อสินค้า</label>
-  <input id="name" value="HARUE FISHING">
-
-  <div class="row">
-    <div>
-      <label>SKU / ข้อความรอง</label>
-      <input id="sku" value="SKU: HF-000001">
-    </div>
-    <div>
-      <label>ราคา</label>
-      <input id="price" value="฿199">
-    </div>
-  </div>
-
-  <div class="sectionTitle">ปรับขนาดด้วยการคีย์ตัวเลข</div>
-
-  <div class="row">
-    <div>
-      <label>ขนาดตัวอักษรชื่อสินค้า (px)</label>
-      <input id="nameFontSize" type="number" min="6" max="80" step="1" value="16" placeholder="เช่น 18">
-    </div>
-    <div>
-      <label>ความหนาชื่อสินค้า (1–1000)</label>
-      <input id="nameFontWeight" type="number" min="1" max="1000" step="1" value="900" placeholder="เช่น 700">
-    </div>
-  </div>
-
-  <div class="checkRow">
-    <label><input id="nameItalic" type="checkbox"> ชื่อสินค้าเป็นตัวเอียง</label>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>ขนาดข้อความข้อมูล QR / URL (px)</label>
-      <input id="dataFontSize" type="number" min="6" max="50" step="1" value="9" placeholder="เช่น 10">
-    </div>
-    <div>
-      <label>ความหนาข้อความ QR / URL (1–1000)</label>
-      <input id="dataFontWeight" type="number" min="1" max="1000" step="1" value="400" placeholder="เช่น 500">
-    </div>
-  </div>
-
-  <div class="checkRow">
-    <label><input id="dataItalic" type="checkbox"> ข้อความ QR / URL เป็นตัวเอียง</label>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>ขนาดข้อความ SKU / ข้อความรอง (px)</label>
-      <input id="skuFontSize" type="number" min="6" max="80" step="1" value="9" placeholder="เช่น 10">
-    </div>
-    <div>
-      <label>ความหนา SKU / ข้อความรอง (1–1000)</label>
-      <input id="skuFontWeight" type="number" min="1" max="1000" step="1" value="400" placeholder="เช่น 700">
-    </div>
-  </div>
-
-  <div class="row">
-    <div>
-      <label>ขนาดข้อความราคา (px)</label>
-      <input id="priceFontSize" type="number" min="6" max="80" step="1" value="15" placeholder="เช่น 18">
-    </div>
-    <div></div>
-  </div>
-
-  <div id="barcodeNumericSize">
-    <div class="row">
-      <div>
-        <label>ความกว้าง Barcode (mm)</label>
-        <input id="codeWidthMM" type="number" min="5" max="58" step="0.1" value="35" placeholder="เช่น 35">
-      </div>
-      <div>
-        <label>ความสูง Barcode (mm)</label>
-        <input id="codeHeightMM" type="number" min="5" max="28" step="0.1" value="14" placeholder="เช่น 14">
-      </div>
-    </div>
-  </div>
-
-  <div id="qrNumericSize" class="hidden">
-    <label>ขนาด QR Code (mm)</label>
-    <input id="qrSizeMM" type="number" min="5" max="28" step="0.1" value="18" placeholder="เช่น 20">
-  </div>
-
-  <label>ปรับขนาดโค้ดแบบ Slider</label>
-  <div class="rangeRow">
-    <input id="sizeRange" type="range" min="40" max="145" value="100">
-    <div class="rangeVal" id="sizeVal">100%</div>
-  </div>
-
-  <div class="sectionTitle">วัดตำแหน่งกึ่งกลาง QR Code / Barcode</div>
-  <div class="checkRow">
-    <label><input id="showCenterGuides" type="checkbox" checked> แสดงเส้นกึ่งกลางฉลาก</label>
-    <button class="print" type="button" id="centerCodeBtn">จัด QR / Barcode ไว้กึ่งกลาง</button>
-  </div>
-  <div class="center-info" id="centerInfo">
-    X: 0.0 mm • Y: 0.0 mm • <span class="center-ok">กึ่งกลางพอดี</span>
-  </div>
-
-  <div class="sectionTitle">ความละเอียดไฟล์ QR & Barcode</div>
-  <div class="row">
-    <div>
-      <label>ระดับความคมชัดตอนบันทึก</label>
-      <select id="exportDpi">
-        <option value="300">สูง — 300 DPI</option>
-        <option value="600">ละเอียดมาก — 600 DPI</option>
-        <option value="1200" selected>สูงสุด — 1200 DPI</option>
-      </select>
-    </div>
-    <div>
-      <label>โหมดความคมชัด</label>
-      <input value="High Precision / ไม่เบลอ" readonly>
-    </div>
-  </div>
-
-  <div class="buttons">
-    <button class="primary" id="generateBtn">สร้าง / อัปเดต</button>
-    <button class="png" id="pngBtn">Save PNG</button>
-    <button class="jpg" id="jpgBtn">Save JPG</button>
-    <button class="pdf" id="pdfBtn">Save PDF</button>
-    <button class="print" id="printBtn">พิมพ์</button>
-  </div>
-
-  <div id="status" class="status"></div>
-  <div id="sizeBadge" class="badge">ขนาดฉลาก: 60 × 30 mm</div>
-
-  <div class="info">
-    <b>ลากวางด้วยเมาส์:</b> สามารถลาก <b>ชื่อสินค้า, SKU, ราคา, ข้อความ QR/URL และ QR Code/Barcode</b> ไปวางตำแหน่งที่ต้องการได้โดยตรง<br>
-    • คลิก Barcode/QR แล้วลากจุดสีน้ำเงินมุมขวาล่างเพื่อย่อ-ขยาย<br>
-    • สามารถคีย์ตัวเลขขนาดชื่อสินค้า, ข้อความ QR, Barcode และ QR Code ได้โดยตรง<br>
-    • เส้นกึ่งกลางสีแดงใช้ตรวจตำแหน่ง QR/Barcode และจะแสดงระยะเยื้อง X/Y เป็น mm<br>• สามารถลาก QR/Barcode เพื่อจัดตำแหน่ง และกดปุ่มจัดกึ่งกลางได้ทันที<br>• PNG/JPG เลือกได้ 300 / 600 / 1200 DPI โดยค่าเริ่มต้นเป็น 1200 DPI เพื่อความคมชัดสูงสุด และ PDF ใช้ขนาดฉลากจริง
-  </div>
-</section>
-
-<section class="card">
-  <div class="preview" id="preview">
-    <div class="label-shell" id="labelShell">
-      <div class="label" id="label">
-        <div class="center-guide v" id="centerGuideV"></div>
-        <div class="center-guide h" id="centerGuideH"></div>
-        <div class="center-dot" id="centerDot"></div>
-        <div class="productName draggable selected" id="outName">HARUE FISHING</div>
-        <div class="sku draggable" id="outSku">SKU: HF-000001</div>
-
-        <div class="code-stage" id="codeStage">
-          <svg id="barcodeSvg"></svg>
-          <div id="qrWrap"></div>
-          <div class="resize-handle" id="resizeHandle" title="ลากเพื่อปรับขนาด"></div>
+  <div class="layout">
+    <div class="panel">
+      <div class="row">
+        <div class="field">
+          <label>ประเภทโค้ด</label>
+          <select><option selected>Barcode</option><option>QR Code</option><option>QR + Barcode</option></select>
         </div>
+        <div class="field">
+          <label>ขนาดฉลาก</label>
+          <select>
+            <option>80 × 30 mm</option>
+            <option>60 × 30 mm</option>
+            <option>50 × 30 mm</option>
+            <option selected>60 × 40 mm</option>
+            <option>40 × 60 mm</option>
+          </select>
+        </div>
+      </div>
 
-        <div class="price draggable" id="outPrice">฿199</div>
-        <div class="dataText draggable" id="outData">HF-000001</div>
+      <div class="field">
+        <label>รูปแบบ Barcode</label>
+        <select><option>CODE 128</option><option>EAN-13</option><option>EAN-8</option><option>UPC-A</option><option>CODE 39</option><option>ITF-14</option></select>
+      </div>
+
+      <div class="field">
+        <label>รหัสสินค้า / Barcode</label>
+        <textarea id="barcodeVal">FSC000564</textarea>
+      </div>
+
+      <div class="field">
+        <label>ชื่อสินค้า</label>
+        <input id="nameVal" value="SHINDOMARU">
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>SKU / ข้อความรอง</label>
+          <input id="skuVal" value="แพ็ค5ตัว/ละ20ชิ้น">
+        </div>
+        <div class="field">
+          <label>ราคา</label>
+          <input id="priceVal" value="998">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>ข้อความเพิ่มเติม</label>
+        <input id="extraVal" value="ข้อความเพิ่มเติม">
+      </div>
+
+      <hr>
+      <div class="section-title">ปรับขนาด / ความหนา / ความเอียงข้อความ</div>
+
+      <div class="row">
+        <div class="field">
+          <label>ขนาดตัวอักษรชื่อสินค้า (px)</label>
+          <input id="nameSize" type="number" value="18">
+        </div>
+        <div class="field">
+          <label>ความหนาชื่อสินค้า (1–1000)</label>
+          <input id="nameWeight" type="number" value="900" min="1" max="1000">
+        </div>
+      </div>
+      <div class="check"><input id="nameItalic" type="checkbox"><span>ชื่อสินค้าเป็นตัวเอียง</span></div>
+
+      <div class="row">
+        <div class="field">
+          <label>ขนาดข้อความ QR / URL (px)</label>
+          <input type="number" value="10">
+        </div>
+        <div class="field">
+          <label>ความหนาข้อความ QR / URL (1–1000)</label>
+          <input type="number" value="400" min="1" max="1000">
+        </div>
+      </div>
+      <div class="check"><input type="checkbox"><span>ข้อความ QR / URL เป็นตัวเอียง</span></div>
+
+      <div class="row">
+        <div class="field">
+          <label>ขนาดข้อความ SKU / ข้อความรอง (px)</label>
+          <input id="skuSize" type="number" value="14">
+        </div>
+        <div class="field">
+          <label>ความหนา SKU / ข้อความรอง (1–1000)</label>
+          <input id="skuWeight" type="number" value="900" min="1" max="1000">
+        </div>
+      </div>
+      <div class="check"><input id="skuItalic" type="checkbox"><span>SKU / ข้อความรอง เป็นตัวเอียง</span></div>
+
+      <div class="row">
+        <div class="field">
+          <label>ขนาดตัวอักษรราคา (px)</label>
+          <input id="priceSize" type="number" value="17">
+        </div>
+        <div class="field">
+          <label>ความหนาราคา (1–1000)</label>
+          <input id="priceWeight" type="number" value="900" min="1" max="1000">
+        </div>
+      </div>
+      <div class="check"><input id="priceItalic" type="checkbox"><span>ราคาเป็นตัวเอียง</span></div>
+
+
+      <div class="row">
+        <div class="field">
+          <label>ขนาดข้อความเพิ่มเติม (px)</label>
+          <input id="extraSize" type="number" value="13">
+        </div>
+        <div class="field">
+          <label>ความหนาข้อความเพิ่มเติม (1–1000)</label>
+          <input id="extraWeight" type="number" value="700" min="1" max="1000">
+        </div>
+      </div>
+      <div class="field">
+        <label>ความชัดข้อความเพิ่มเติม</label>
+        <select id="extraClarity">
+          <option>ปกติ</option>
+          <option selected>คมชัดสูง</option>
+          <option>คมชัดสูงสุด</option>
+        </select>
+      </div>
+
+      <div class="row">
+        <div class="field">
+          <label>ความกว้าง Barcode (mm)</label>
+          <input type="number" value="34.9" step="0.1">
+        </div>
+        <div class="field">
+          <label>ความสูง Barcode (mm)</label>
+          <input type="number" value="14" step="0.1">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>ปรับขนาดโค้ดแบบ Slider</label>
+        <div class="inline">
+          <input type="range" min="50" max="150" value="100">
+          <button type="button" style="background:#2a3544;color:#fff">คืนค่าเดิม</button>
+        </div>
+      </div>
+
+      <hr>
+      <div class="section-title">จัดตำแหน่งส่วน QR Code / Barcode</div>
+      <div class="check">
+        <input type="checkbox" checked>
+        <span>แสดงเส้นกึ่งกลางฉลาก</span>
+      </div>
+      <div class="check">
+        <input type="checkbox" checked>
+        <span>ลาก QR / Barcode ไปจัดวาง</span>
+      </div>
+      <div class="coord">X: 0.0 mm • Y: 0.0 mm • <span class="green">กึ่งกลางพอดี</span></div>
+
+      <hr>
+      <div class="section-title">การแสดงรหัสสินค้า</div>
+      <div class="check">
+        <input type="checkbox" checked disabled>
+        <span><b>ซ่อนรหัสสินค้า / Barcode ที่มุมซ้ายล่าง</b></span>
+      </div>
+      <div class="mini">v13 จะไม่พิมพ์รหัสซ้ำที่มุมซ้ายล่าง แต่ข้อความใต้แท่ง Barcode ยังเลือกแสดงได้ตามเดิม</div>
+
+      <hr>
+      <div class="section-title">ความละเอียดไฟล์ QR & Barcode</div>
+      <div class="row">
+        <div class="field">
+          <label>ระดับความละเอียดงานพิมพ์</label>
+          <select>
+            <option>มาตรฐาน — 300 DPI</option>
+            <option>สูง — 600 DPI</option>
+            <option selected>สูงสุด — 1200 DPI</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>โหมดความคมชัด</label>
+          <select>
+            <option>Standard</option>
+            <option selected>High Precision / ไม่เบลอ</option>
+            <option>Ultra Sharp Text</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>ความชัดข้อความ</label>
+          <select>
+            <option>ปกติ</option>
+            <option selected>คมชัดสูง</option>
+            <option>คมชัดสูงสุด</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Text Rendering</label>
+          <select>
+            <option selected>Vector / Anti-blur</option>
+            <option>Pixel Perfect</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="actions">
+        <button class="b1">สร้าง / อัปเดต</button>
+        <button class="b2">Save PNG</button>
+        <button class="b3">Save JPG</button>
+        <button class="b4">Save PDF</button>
+        <button class="b5">พิมพ์</button>
+      </div>
+    </div>
+
+    <div class="panel preview-panel">
+      <div class="preview-stage">
+        <div class="label-preview">
+          <div class="center-v"></div>
+          <div class="center-h"></div>
+          <div id="pName" class="name">SHINDOMARU</div>
+          <div id="bars" class="fake-barcode"></div>
+          <div id="bcText" class="bc-text">FSC000564</div>
+          <div id="pSku" class="sku">แพ็ค5ตัว/ละ20ชิ้น</div>
+          <div id="pExtra" style="position:absolute;left:50%;bottom:52px;transform:translateX(-50%);font-size:13px;font-weight:700;white-space:nowrap;">ข้อความเพิ่มเติม</div>
+          <div id="pPrice" class="price">998</div>
+        </div>
+      </div>
+
+      <div class="note">
+        <b>แก้จากตัวอย่างก่อนหน้าแล้ว:</b><br>
+        เมนู <b>ขนาดข้อความ / ความหนา / ความเอียง / ความชัด</b> ถูกใส่กลับมาให้ครบ และเพิ่ม <b>ข้อความเพิ่มเติม</b> อีก 1 ช่องที่ปรับขนาด ความหนา และความชัดได้
+        โดยสิ่งใหม่มีแค่ <b>60 × 40 mm</b> และ <b>ตัดรหัสสินค้าที่ซ้ำมุมซ้ายล่าง</b> เท่านั้น
       </div>
     </div>
   </div>
-</section>
-</div>
 </div>
 
 <script>
-const MM_TO_PX = 5;
-let barcodeW = 175, barcodeH = 70, qrS = 90;
-let resizing = false, resizeStartX=0, resizeStartY=0, resizeStartW=0, resizeStartH=0;
-
 const $ = id => document.getElementById(id);
+const widths=[2,1,4,2,3,1,1,3,2,4,1,2,3,1,4,2,2,1,3,4,1,2,1,4,3,2,1,3,4,1,2,3,1,4];
+widths.forEach(w=>{
+  const b=document.createElement('div'); b.className='bar'; b.style.width=(w*1.65)+'px'; $('bars').appendChild(b);
+});
 
-function getLabelSize(){
-  const [w,h] = $('labelSize').value.split('x').map(Number);
-  return {w,h};
-}
+function sync(){
+  $('pName').textContent=$('nameVal').value;
+  $('pSku').textContent=$('skuVal').value;
+  $('pExtra').textContent=$('extraVal').value;
+  $('pPrice').textContent=$('priceVal').value;
+  $('bcText').textContent=$('barcodeVal').value;
 
-function applyLabelSize(){
-  const {w,h}=getLabelSize();
-  $('labelShell').style.width=(w*MM_TO_PX)+'px';
-  $('labelShell').style.height=(h*MM_TO_PX)+'px';
-  $('sizeBadge').textContent=`ขนาดฉลาก: ${w} × ${h} mm`;
-  keepElementsInside();
-  updateCodeCenterInfo();
-}
+  $('pName').style.fontSize=$('nameSize').value+'px';
+  $('pName').style.fontWeight=$('nameWeight').value;
+  $('pName').style.fontStyle=$('nameItalic').checked?'italic':'normal';
 
-function setTextSizes(){
-  const n = Math.max(6, Math.min(80, Number($('nameFontSize').value)||16));
-  const d = Math.max(6, Math.min(50, Number($('dataFontSize').value)||9));
-  const s = Math.max(6, Math.min(80, Number($('skuFontSize').value)||9));
-  const p = Math.max(6, Math.min(80, Number($('priceFontSize').value)||15));
-  const nw = Math.max(1, Math.min(1000, Number($('nameFontWeight').value)||900));
-  const dw = Math.max(1, Math.min(1000, Number($('dataFontWeight').value)||400));
-  const sw = Math.max(1, Math.min(1000, Number($('skuFontWeight').value)||400));
+  $('pSku').style.fontSize=$('skuSize').value+'px';
+  $('pSku').style.fontWeight=$('skuWeight').value;
+  $('pSku').style.fontStyle=$('skuItalic').checked?'italic':'normal';
 
-  $('outName').style.fontSize=n+'px';
-  $('outData').style.fontSize=d+'px';
-  $('outSku').style.fontSize=s+'px';
-  $('outPrice').style.fontSize=p+'px';
+  $('pPrice').style.fontSize=$('priceSize').value+'px';
+  $('pPrice').style.fontWeight=$('priceWeight').value;
+  $('pPrice').style.fontStyle=$('priceItalic').checked?'italic':'normal';
 
-  $('outName').style.fontWeight=String(nw);
-  $('outData').style.fontWeight=String(dw);
-  $('outSku').style.fontWeight=String(sw);
-  $('outName').style.fontStyle=$('nameItalic').checked?'italic':'normal';
-  $('outData').style.fontStyle=$('dataItalic').checked?'italic':'normal';
-}
+  $('pExtra').style.fontSize=$('extraSize').value+'px';
+  $('pExtra').style.fontWeight=$('extraWeight').value;
 
-function syncCodeNumeric(){
-  const r=$('codeStage').getBoundingClientRect();
-  if($('codeType').value==='qr'){
-    $('qrSizeMM').value=(r.width/MM_TO_PX).toFixed(1);
-  }else{
-    $('codeWidthMM').value=(r.width/MM_TO_PX).toFixed(1);
-    $('codeHeightMM').value=(r.height/MM_TO_PX).toFixed(1);
+  const clarity = $('extraClarity').value;
+  if (clarity === 'คมชัดสูงสุด') {
+    $('pExtra').style.textRendering = 'geometricPrecision';
+    $('pExtra').style.webkitFontSmoothing = 'antialiased';
+  } else if (clarity === 'คมชัดสูง') {
+    $('pExtra').style.textRendering = 'optimizeLegibility';
+    $('pExtra').style.webkitFontSmoothing = 'antialiased';
+  } else {
+    $('pExtra').style.textRendering = 'auto';
+    $('pExtra').style.webkitFontSmoothing = 'auto';
   }
 }
-
-function applyNumericCodeSize(){
-  if($('codeType').value==='qr'){
-    let s=parseFloat($('qrSizeMM').value);
-    if(!Number.isFinite(s)) return;
-    s=Math.max(5,Math.min(28,s));
-    qrS=s*MM_TO_PX;
-    $('codeStage').style.width=qrS+'px';
-    $('codeStage').style.height=qrS+'px';
-  }else{
-    let w=parseFloat($('codeWidthMM').value);
-    let h=parseFloat($('codeHeightMM').value);
-    if(!Number.isFinite(w)||!Number.isFinite(h)) return;
-    w=Math.max(5,Math.min(58,w));
-    h=Math.max(5,Math.min(28,h));
-    barcodeW=w*MM_TO_PX;
-    barcodeH=h*MM_TO_PX;
-    $('codeStage').style.width=barcodeW+'px';
-    $('codeStage').style.height=barcodeH+'px';
-  }
-  $('sizeRange').value=100;
-  $('sizeVal').textContent='กำหนดเอง';
-  centerCodeIfOutside();
-  updateCodeCenterInfo();
-}
-
-function updateStageSize(){
-  const scale=Number($('sizeRange').value)/100;
-  if($('codeType').value==='qr'){
-    const s=Math.max(25,Math.min(140,qrS*scale));
-    $('codeStage').style.width=s+'px';
-    $('codeStage').style.height=s+'px';
-  }else{
-    const w=Math.max(25,Math.min(290,barcodeW*scale));
-    const h=Math.max(25,Math.min(140,barcodeH*scale));
-    $('codeStage').style.width=w+'px';
-    $('codeStage').style.height=h+'px';
-  }
-  $('sizeVal').textContent=$('sizeRange').value+'%';
-  syncCodeNumeric();
-  centerCodeIfOutside();
-  updateCodeCenterInfo();
-}
-
-
-function updateCenterGuides(){
-  const show=$('showCenterGuides').checked;
-  $('centerGuideV').style.display=show?'block':'none';
-  $('centerGuideH').style.display=show?'block':'none';
-  $('centerDot').style.display=show?'block':'none';
-}
-
-function updateCodeCenterInfo(){
-  const label=$('label');
-  const stage=$('codeStage');
-  const lr=label.getBoundingClientRect();
-  const sr=stage.getBoundingClientRect();
-
-  const labelCx=lr.left + lr.width/2;
-  const labelCy=lr.top + lr.height/2;
-  const codeCx=sr.left + sr.width/2;
-  const codeCy=sr.top + sr.height/2;
-
-  const dxPx=codeCx-labelCx;
-  const dyPx=codeCy-labelCy;
-  const dx=dxPx/MM_TO_PX;
-  const dy=dyPx/MM_TO_PX;
-
-  const centered=Math.abs(dx)<=0.2 && Math.abs(dy)<=0.2;
-  $('centerInfo').innerHTML=
-    `X: ${dx.toFixed(1)} mm • Y: ${dy.toFixed(1)} mm • ` +
-    (centered
-      ? '<span class="center-ok">กึ่งกลางพอดี</span>'
-      : '<span class="center-off">ยังไม่กึ่งกลาง</span>');
-}
-
-function centerCode(){
-  const stage=$('codeStage');
-  stage.style.left='50%';
-  stage.style.top='50%';
-  stage.style.transform='translate(-50%,-50%)';
-  updateCodeCenterInfo();
-}
-
-function makeCodeDraggable(){
-  const el=$('codeStage');
-  let dragging=false,startX=0,startY=0,startLeft=0,startTop=0;
-
-  el.addEventListener('pointerdown',e=>{
-    if(e.target===$('resizeHandle')) return;
-    e.preventDefault();
-    selectElement(el);
-    dragging=true;
-    startX=e.clientX; startY=e.clientY;
-
-    const lr=$('label').getBoundingClientRect();
-    const er=el.getBoundingClientRect();
-    startLeft=er.left-lr.left;
-    startTop=er.top-lr.top;
-
-    el.style.transform='none';
-    el.style.left=startLeft+'px';
-    el.style.top=startTop+'px';
-    el.setPointerCapture(e.pointerId);
-  });
-
-  el.addEventListener('pointermove',e=>{
-    if(!dragging || resizing) return;
-    const label=$('label');
-    let left=startLeft+(e.clientX-startX);
-    let top=startTop+(e.clientY-startY);
-
-    const maxLeft=Math.max(0,label.clientWidth-el.offsetWidth);
-    const maxTop=Math.max(0,label.clientHeight-el.offsetHeight);
-    left=Math.max(0,Math.min(maxLeft,left));
-    top=Math.max(0,Math.min(maxTop,top));
-
-    el.style.left=left+'px';
-    el.style.top=top+'px';
-    updateCodeCenterInfo();
-  });
-
-  const stop=()=>{dragging=false;updateCodeCenterInfo();};
-  el.addEventListener('pointerup',stop);
-  el.addEventListener('pointercancel',stop);
-}
-
-function generate(){
-  applyLabelSize();
-  setTextSizes();
-
-  const type=$('codeType').value;
-  const val=$('value').value.trim();
-
-  $('outName').textContent=$('name').value||'';
-  $('outSku').textContent=$('sku').value||'';
-  $('outPrice').textContent=$('price').value||'';
-  $('outData').textContent=val||'';
-
-  $('barcodeOptions').classList.toggle('hidden',type!=='barcode');
-  $('barcodeNumericSize').classList.toggle('hidden',type!=='barcode');
-  $('qrNumericSize').classList.toggle('hidden',type!=='qr');
-  $('valueLabel').textContent=type==='qr'?'ข้อมูล QR Code / URL / ข้อความ':'รหัสสินค้า / Barcode';
-
-  if(!val){
-    $('status').textContent='กรุณากรอกข้อมูล';
-    $('status').style.color='#ff808b';
-    return false;
-  }
-
-  if(type==='barcode'){
-    $('barcodeSvg').style.display='block';
-    $('qrWrap').style.display='none';
-    $('qrWrap').innerHTML='';
-    try{
-      JsBarcode('#barcodeSvg',val,{
-        format:$('format').value,
-        width:1.35,height:52,displayValue:true,fontSize:11,
-        textMargin:1,margin:2,background:'#fff',lineColor:'#000'
-      });
-      $('barcodeSvg').setAttribute('width','100%');
-      $('barcodeSvg').setAttribute('height','100%');
-      $('barcodeSvg').style.width='100%';
-      $('barcodeSvg').style.height='100%';
-      $('status').textContent='✓ สร้าง Barcode เรียบร้อย';
-      $('status').style.color='#39c77a';
-      updateCodeCenterInfo();
-      return true;
-    }catch(e){
-      $('status').textContent='รหัสไม่ถูกต้องสำหรับ Barcode ที่เลือก';
-      $('status').style.color='#ff808b';
-      return false;
-    }
-  }else{
-    $('barcodeSvg').style.display='none';
-    $('qrWrap').style.display='flex';
-    $('qrWrap').innerHTML='';
-    try{
-      new QRCode($('qrWrap'),{
-        text:val,width:400,height:400,colorDark:'#000000',colorLight:'#ffffff',
-        correctLevel:QRCode.CorrectLevel.M
-      });
-      $('status').textContent='✓ สร้าง QR Code เรียบร้อย';
-      $('status').style.color='#39c77a';
-      updateCodeCenterInfo();
-      return true;
-    }catch(e){
-      $('status').textContent='ไม่สามารถสร้าง QR Code ได้';
-      $('status').style.color='#ff808b';
-      return false;
-    }
-  }
-}
-
-/* Generic dragging for product name and data text */
-function makeDraggable(el){
-  let dragging=false,startX=0,startY=0,startLeft=0,startTop=0;
-
-  el.addEventListener('pointerdown',e=>{
-    if(e.target===el){
-      e.preventDefault();
-      selectElement(el);
-      dragging=true;
-      startX=e.clientX; startY=e.clientY;
-      const labelRect=$('label').getBoundingClientRect();
-      const rect=el.getBoundingClientRect();
-      startLeft=rect.left-labelRect.left;
-      startTop=rect.top-labelRect.top;
-      el.style.left=startLeft+'px';
-      el.style.top=startTop+'px';
-      el.style.right='auto';
-      el.style.bottom='auto';
-      el.setPointerCapture(e.pointerId);
-    }
-  });
-
-  el.addEventListener('pointermove',e=>{
-    if(!dragging)return;
-    const label=$('label');
-    let left=startLeft+(e.clientX-startX);
-    let top=startTop+(e.clientY-startY);
-    const maxLeft=Math.max(0,label.clientWidth-el.offsetWidth);
-    const maxTop=Math.max(0,label.clientHeight-el.offsetHeight);
-    left=Math.max(0,Math.min(maxLeft,left));
-    top=Math.max(0,Math.min(maxTop,top));
-    el.style.left=left+'px';
-    el.style.top=top+'px';
-  });
-
-  const stop=()=>dragging=false;
-  el.addEventListener('pointerup',stop);
-  el.addEventListener('pointercancel',stop);
-}
-
-function selectElement(el){
-  document.querySelectorAll('.draggable,.code-stage').forEach(x=>x.classList.remove('selected'));
-  el.classList.add('selected');
-}
-
-makeDraggable($('outName'));
-makeDraggable($('outSku'));
-makeDraggable($('outPrice'));
-makeDraggable($('outData'));
-makeCodeDraggable();
-
-$('codeStage').addEventListener('pointerdown',e=>{
-  if(e.target!==$('resizeHandle')) selectElement($('codeStage'));
+document.querySelectorAll('input,textarea,select').forEach(el=>{
+  el.addEventListener('input',sync); el.addEventListener('change',sync);
 });
-
-/* Resize QR / Barcode */
-$('resizeHandle').addEventListener('pointerdown',e=>{
-  e.preventDefault();e.stopPropagation();
-  selectElement($('codeStage'));
-  resizing=true;
-  resizeStartX=e.clientX;resizeStartY=e.clientY;
-  const r=$('codeStage').getBoundingClientRect();
-  resizeStartW=r.width;resizeStartH=r.height;
-  $('resizeHandle').setPointerCapture(e.pointerId);
-});
-
-$('resizeHandle').addEventListener('pointermove',e=>{
-  if(!resizing)return;
-  const dx=e.clientX-resizeStartX;
-  const dy=e.clientY-resizeStartY;
-
-  if($('codeType').value==='qr'){
-    let s=Math.max(25,Math.min(140,resizeStartW+Math.max(dx,dy)));
-    $('codeStage').style.width=s+'px';
-    $('codeStage').style.height=s+'px';
-    qrS=s;
-  }else{
-    let w=Math.max(25,Math.min(290,resizeStartW+dx));
-    let h=Math.max(25,Math.min(140,resizeStartH+dy));
-    $('codeStage').style.width=w+'px';
-    $('codeStage').style.height=h+'px';
-    barcodeW=w;barcodeH=h;
-  }
-  $('sizeRange').value=100;
-  $('sizeVal').textContent='ลากเอง';
-  syncCodeNumeric();
-  centerCodeIfOutside();
-  updateCodeCenterInfo();
-});
-
-function stopResize(){resizing=false}
-$('resizeHandle').addEventListener('pointerup',stopResize);
-$('resizeHandle').addEventListener('pointercancel',stopResize);
-
-$('preview').addEventListener('pointerdown',e=>{
-  if(!$('outName').contains(e.target) && !$('outSku').contains(e.target) && !$('outPrice').contains(e.target) && !$('outData').contains(e.target) && !$('codeStage').contains(e.target)){
-    document.querySelectorAll('.draggable,.code-stage').forEach(x=>x.classList.remove('selected'));
-  }
-});
-
-function keepElementsInside(){
-  [$('outName'),$('outSku'),$('outPrice'),$('outData')].forEach(el=>{
-    const label=$('label');
-    const r=el.getBoundingClientRect();
-    const lr=label.getBoundingClientRect();
-    let left=r.left-lr.left, top=r.top-lr.top;
-    left=Math.max(0,Math.min(Math.max(0,label.clientWidth-el.offsetWidth),left));
-    top=Math.max(0,Math.min(Math.max(0,label.clientHeight-el.offsetHeight),top));
-    el.style.left=left+'px';el.style.top=top+'px';
-    el.style.right='auto';el.style.bottom='auto';
-  });
-  centerCodeIfOutside();
-}
-
-function centerCodeIfOutside(){
-  const stage=$('codeStage'), label=$('label');
-  if(stage.offsetWidth>label.clientWidth) stage.style.width=(label.clientWidth-4)+'px';
-  if(stage.offsetHeight>label.clientHeight) stage.style.height=(label.clientHeight-4)+'px';
-}
-
-/* Export */
-async function renderLabel(){
-  if(!generate()) throw new Error('invalid');
-  await new Promise(r=>setTimeout(r,100));
-
-  document.querySelectorAll('.draggable,.code-stage').forEach(x=>x.classList.remove('selected'));
-
-  const guideWasOn=$('showCenterGuides').checked;
-  $('centerGuideV').style.display='none';
-  $('centerGuideH').style.display='none';
-  $('centerDot').style.display='none';
-
-  const {w,h}=getLabelSize();
-  const dpi = Math.max(300, Math.min(1200, Number($('exportDpi').value)||1200));
-  const tw = Math.round(w/25.4*dpi);
-  const th = Math.round(h/25.4*dpi);
-
-  const c=await html2canvas($('label'),{
-    backgroundColor:'#ffffff',
-    scale:4,
-    useCORS:true,
-    logging:false
-  });
-
-  const out=document.createElement('canvas');
-  out.width=tw;out.height=th;
-  const ctx=out.getContext('2d');
-  ctx.imageSmoothingEnabled=false;
-  ctx.fillStyle='#fff';ctx.fillRect(0,0,tw,th);
-  ctx.imageSmoothingEnabled=true;
-  ctx.imageSmoothingQuality='high';
-  ctx.drawImage(c,0,0,tw,th);
-
-  if(guideWasOn) updateCenterGuides();
-  return out;
-}
-
-function fileBase(){
-  const type=$('codeType').value==='qr'?'QR':'BARCODE';
-  const val=($('value').value||'code').replace(/[^a-zA-Z0-9_-]/g,'_').slice(0,25);
-  return `${type}_${val}_${$('labelSize').value}mm`;
-}
-
-async function savePNG(){
-  try{
-    const c=await renderLabel();
-    const a=document.createElement('a');
-    a.download=fileBase()+'.png';
-    a.href=c.toDataURL('image/png');
-    a.click();
-  }catch(e){}
-}
-async function saveJPG(){
-  try{
-    const c=await renderLabel();
-    const a=document.createElement('a');
-    a.download=fileBase()+'.jpg';
-    a.href=c.toDataURL('image/jpeg',0.96);
-    a.click();
-  }catch(e){}
-}
-async function savePDF(){
-  try{
-    const c=await renderLabel();
-    const {w,h}=getLabelSize();
-    const {jsPDF}=window.jspdf;
-    const pdf=new jsPDF({
-      orientation:w>h?'landscape':'portrait',
-      unit:'mm',format:[w,h],compress:true
-    });
-    pdf.addImage(c.toDataURL('image/png'),'PNG',0,0,w,h);
-    pdf.save(fileBase()+'.pdf');
-  }catch(e){}
-}
-
-/* Events */
-$('generateBtn').addEventListener('click',generate);
-$('pngBtn').addEventListener('click',savePNG);
-$('jpgBtn').addEventListener('click',saveJPG);
-$('pdfBtn').addEventListener('click',savePDF);
-$('printBtn').addEventListener('click',()=>window.print());
-
-$('codeType').addEventListener('change',()=>{
-  $('sizeRange').value=100;
-  generate();
-  applyNumericCodeSize();
-});
-$('sizeRange').addEventListener('input',updateStageSize);
-
-['codeWidthMM','codeHeightMM','qrSizeMM'].forEach(id=>{
-  $(id).addEventListener('input',applyNumericCodeSize);
-  $(id).addEventListener('change',applyNumericCodeSize);
-});
-
-['nameFontSize','dataFontSize','skuFontSize','priceFontSize','nameFontWeight','dataFontWeight','skuFontWeight','nameItalic','dataItalic'].forEach(id=>{
-  $(id).addEventListener('input',setTextSizes);
-  $(id).addEventListener('change',setTextSizes);
-});
-
-
-function clampWeightInput(id, fallback){
-  const el=$(id);
-  let v=Number(el.value);
-  if(!Number.isFinite(v)) v=fallback;
-  v=Math.max(1,Math.min(1000,Math.round(v)));
-  el.value=v;
-  setTextSizes();
-}
-$('nameFontWeight').addEventListener('change',()=>clampWeightInput('nameFontWeight',900));
-$('dataFontWeight').addEventListener('change',()=>clampWeightInput('dataFontWeight',400));
-$('skuFontWeight').addEventListener('change',()=>clampWeightInput('skuFontWeight',400));
-
-$('showCenterGuides').addEventListener('change',updateCenterGuides);
-$('centerCodeBtn').addEventListener('click',centerCode);
-
-['labelSize','format','value','name','sku','price'].forEach(id=>{
-  $(id).addEventListener('input',generate);
-  $(id).addEventListener('change',generate);
-});
-
-generate();
-applyNumericCodeSize();
-updateCenterGuides();
-updateCodeCenterInfo();
+sync();
 </script>
-
-<footer class="sdm-copyright">
-  <div><strong>© SDM QR & Barcode Generator</strong> — All Rights Reserved</div>
-  <div>ผู้สร้าง: Mr.KUMPOL SAELEE</div>
-  <div>Email: kampol.saelee@gmail.com</div>
-  <div>ID Line: lizhengwu</div>
-  <div>Wechat id: lzwrick</div>
-  <div>Phone: 0636616896</div>
-</footer>
-
 </body>
 </html>
